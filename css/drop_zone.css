@@ -1,0 +1,78 @@
+
+/** File drag and drop zone. */
+div.drop-zone {
+  vertical-align:top;
+  display: inline-block;
+  border: 2px dashed #BBB;
+  padding: 25px;
+  text-align: center;
+  font: 20pt bold 'Vollkorn';
+  max-width: 400px;
+  min-width: 360px;
+  height: auto;
+  position: relative;
+  margin-bottom: 50px;
+}
+
+/** Displays the dragged or selected files. */
+div.files-list {
+  vertical-align:top;
+  display: inline-block;
+  padding: 20px 20px 30px 20px;
+  border: dashed 2px #ccc;
+  background: #fefefe;
+  max-width: 400px;
+  min-width: 300px;
+  min-height: 240px;
+  height: auto;
+  position: relative;
+  margin-bottom: 50px;
+}
+
+/**
+ * Little breathing space for the files list iff drop zone is previous
+ * sibling.
+ */
+div.drop-zone + div.files-list {
+  margin-left: 20px;
+}
+
+div.files-list a#reset {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  color: #ccc;
+  text-decoration: none;
+}
+
+div.files-list ul {
+  margin: 0;
+  position: relative;
+}
+
+div.files-list ul li {
+  position: relative;
+  border-bottom: solid 1px #ccc;
+}
+
+/** Display the uploaded files metadata such as file name, mime types etc. */
+div.files-list p {
+  text-align: center;
+  font-size: 13px;
+  line-height: 8px;
+}
+
+div.files-list a#reset:hover {
+  color: #333;
+}
+
+div.files-list a#upload {
+  color: #000;
+  position: absolute;
+  bottom: 10px;
+  right: 10px;
+  background-color: #D5DFF3;
+  padding: 4px 6px;
+  text-decoration: none;
+  font-weight: bold;
+}

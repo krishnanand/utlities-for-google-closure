@@ -1,0 +1,238 @@
+<!--
+ * Copyright (C) 2013 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+-->
+
+<!-- Unit tests for collapse tests.
+ -->
+<!DOCTYPE html>
+<html>
+<head>
+   <title>Collapse Test.</title>
+ <meta charset="utf-8"/>
+ <style type='text/css'>
+body {
+  font-family: "Arial";
+  font-size: 14px;
+  line-height: 18px;
+}
+
+.accordion-heading, .accordion-body {
+  border: 1px solid #E5E5E5;
+  width: 25%;
+  padding: 3px 8px;
+}
+
+a {
+ text-decoration:none;
+}
+
+.hide {
+  display: none;
+}
+
+.show {
+  display: block;
+}
+
+.invisible {
+  visibility: hidden;
+}
+
+.show-empty {
+  display: "";
+}
+
+.accordion-heading {
+  border-bottom: 0;
+}
+ </style>
+</head>
+<body>
+<div id="container">
+<div id="parentElement">
+  <div id="accordion-group">
+    <div class="accordion-heading">
+      <a class="toggle collapse" data-toggle="collapse" data-parent="#parentElement" data-target="#collapseElement1" data-collapse="true" id="collapsibleAnchor1" href="#">Collapse # 1 Group.</a>
+    </div>
+    <div class="accordion-body hide" id="collapseElement1">
+      <div id="inner1" >
+          Show me or hide me # 1
+      </div>
+    </div>
+  </div>
+  <div id="accordion-group">
+    <div class="accordion-heading">
+      <a class="toggle expand" data-toggle="collapse" data-parent="#parentElement" data-target="#collapseElement2" data-collapse="false" id="collapsibleAnchor2" href="#">Collapse # 2 Group.</a>
+    </div>
+    <div class="accordion-body show-empty collapsible" id="collapseElement2">
+      <div id="inner2">
+          Show me or hide me # 2
+      </div>
+    </div>
+  </div>
+</div>
+</div>
+<script src = "deps_html.js"></script>
+<script type="text/javascript">
+  goog.require('goog.events');
+  goog.require('goog.testing.events');
+  goog.require('goog.testing.jsunit');
+  goog.require('treasury.ui.Collapse');
+</script>
+<script type="text/javascript">
+  var collapse;
+  var container = document.querySelector('#container');
+  var containerHtml = container.innerHTML;
+
+  function setUp() {
+    container.innerHTML = containerHtml;
+    collapse =
+        new treasury.ui.Collapse(
+            document.querySelectorAll('[data-toggle=collapse]'));
+    collapse.decorate(document.querySelector('#parentElement'));
+  }
+
+  function tearDown() {
+    collapse.dispose();
+    assertEquals(0, goog.events.getTotalListenerCount());
+  }
+
+  /**
+   * Tests the following use case:
+   *
+   * 1. If collapse group one link is clicked, then the expansion target is
+   * expanded
+   * 2. The collapse two group previously expanded is now collapsed.
+   */
+  function testCollapseGroupOneExpanded() {
+    var collapsibleElementOne = document.querySelector('#collapseElement1');
+    var collapsibleElementTwo = document.querySelector('#collapseElement2');
+    var eventTarget = document.querySelector('#collapsibleAnchor1');
+    goog.testing.events.fireClickSequence(eventTarget);
+    assertTrue(collapsibleElementOne.classList.contains('show-empty'));
+    assertFalse(collapsibleElementOne.classList.contains('hide'));
+    assertFalse(collapsibleElementTwo.classList.contains('show-empty'));
+    assertTrue(collapsibleElementTwo.classList.contains('hide'));
+    assertTrue(eventTarget.classList.contains('expand'));
+    assertFalse(eventTarget.classList.contains('collapse'));
+  }
+
+  /**
+   * Tests the following use case:
+   *
+   * 1. If the collapse group two expand link is clicked, the currently expanded
+   * target is collapsed and
+   * 2. The collapse group one collapsed element stays collapsed.
+   */
+  function testCollapseGroupTwoCollapsed() {
+    var collapsibleElementOne = document.querySelector('#collapseElement1');
+    var collapsibleElementTwo = document.querySelector('#collapseElement2');
+    var eventTarget = document.querySelector('#collapsibleAnchor2');
+    goog.testing.events.fireClickSequence(eventTarget);
+    assertFalse(collapsibleElementOne.classList.contains('show-empty'));
+    assertTrue(collapsibleElementOne.classList.contains('hide'));
+    assertFalse(collapsibleElementTwo.classList.contains('show-empty'));
+    assertTrue(collapsibleElementTwo.classList.contains('hide'));
+    assertTrue(eventTarget.classList.contains('collapse'));
+    assertFalse(eventTarget.classList.contains('expand'));
+  }
+
+  /**
+   * Tests the following use case:
+   *
+   * 1. If collapse group one link is clicked, then the expansion target is
+   * expanded
+   * 2. The collapse two group previously expanded is now collapsed.
+   * 3. If the collapse two group expansion link is clicked, the expansion
+   * target is expanded, but in addition the previously expanded collapse
+   * group one target stays intact, (i.e. not collapsed.)
+   */
+  function testCollapseGroupOneExpandedAfterGroupTwoExpansion() {
+    var collapsibleElementOne = document.querySelector('#collapseElement1');
+    var collapsibleElementTwo = document.querySelector('#collapseElement2');
+    var eventTarget = document.querySelector('#collapsibleAnchor1');
+    goog.testing.events.fireClickSequence(eventTarget);
+    assertTrue(collapsibleElementOne.classList.contains('show-empty'));
+    assertFalse(collapsibleElementOne.classList.contains('hide'));
+    assertFalse(collapsibleElementTwo.classList.contains('show-empty'));
+    assertTrue(collapsibleElementTwo.classList.contains('hide'));
+    assertTrue(eventTarget.classList.contains('expand'));
+    assertFalse(eventTarget.classList.contains('collapse'));
+    goog.testing.events.fireClickSequence(
+        document.querySelector('#collapsibleAnchor2'));
+    assertTrue(collapsibleElementOne.classList.contains('show-empty'));
+    assertFalse(collapsibleElementOne.classList.contains('hide'));
+    assertTrue(collapsibleElementTwo.classList.contains('show-empty'));
+    assertFalse(collapsibleElementTwo.classList.contains('hide'));
+  }
+
+  /**
+   * Tests the following use case:
+   *
+   * 1. The user clicks on Collapse Group 1 to make it expand.
+   * 2. The user clicks on Collapse Group 1 again to make it collapse.
+   */
+  function testCollapseGroupOneExpandAndCollapse() {
+    var collapsibleElementOne = document.querySelector('#collapseElement1');
+    var collapsibleElementTwo = document.querySelector('#collapseElement2');
+    var eventTarget = document.querySelector('#collapsibleAnchor1');
+    goog.testing.events.fireClickSequence(eventTarget);
+    assertTrue(collapsibleElementOne.classList.contains('show-empty'));
+    assertFalse(collapsibleElementOne.classList.contains('hide'));
+    assertTrue(eventTarget.classList.contains('expand'));
+    assertFalse(eventTarget.classList.contains('collapse'));
+    // Remains as it is.
+    assertFalse(collapsibleElementTwo.classList.contains('show-empty'));
+    assertTrue(collapsibleElementTwo.classList.contains('hide'));
+    goog.testing.events.fireClickSequence(eventTarget);
+    assertTrue(collapsibleElementOne.classList.contains('hide'));
+    assertFalse(collapsibleElementOne.classList.contains('show-empty'));
+    assertFalse(eventTarget.classList.contains('expand'));
+    assertTrue(eventTarget.classList.contains('collapse'));
+    // Remains as it is.
+    assertFalse(collapsibleElementTwo.classList.contains('show-empty'));
+    assertTrue(collapsibleElementTwo.classList.contains('hide'));
+  }
+
+  /**
+   * Tests the following use case:
+   *
+   * 1. If collapse group two expand link is clicked, the currently expanded
+   * target is collapsed and
+   * 2. The user clicks on Collapse Group 1 again to make it expand.
+   */
+  function testCollapseGroupTwoCollapsedAndExpanded() {
+    var collapsibleElementOne = document.querySelector('#collapseElement1');
+    var collapsibleElementTwo = document.querySelector('#collapseElement2');
+    var eventTarget = document.querySelector('#collapsibleAnchor2');
+    goog.testing.events.fireClickSequence(eventTarget);
+    assertFalse(collapsibleElementOne.classList.contains('show-empty'));
+    assertTrue(collapsibleElementOne.classList.contains('hide'));
+    assertFalse(collapsibleElementTwo.classList.contains('show-empty'));
+    assertTrue(collapsibleElementTwo.classList.contains('hide'));
+    assertFalse(eventTarget.classList.contains('expand'));
+    assertTrue(eventTarget.classList.contains('collapse'));
+    goog.testing.events.fireClickSequence(
+        document.querySelector('#collapsibleAnchor2'));
+    assertFalse(collapsibleElementOne.classList.contains('show-empty'));
+    assertTrue(collapsibleElementOne.classList.contains('hide'));
+    assertTrue(collapsibleElementTwo.classList.contains('show-empty'));
+    assertFalse(collapsibleElementTwo.classList.contains('hide'));
+    assertTrue(eventTarget.classList.contains('expand'));
+    assertFalse(eventTarget.classList.contains('collapse'));
+  }
+</script>
+</body>
+</html>

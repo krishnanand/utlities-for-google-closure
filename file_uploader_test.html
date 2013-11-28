@@ -1,0 +1,325 @@
+<!--
+ * Copyright (C) 2013 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+-->
+
+<!DOCTYPE html>
+<html>
+<head>
+   <title>File Uploader Test.</title>
+   <style type="text/css">
+     div.drop-zone {
+        vertical-align:top;
+        display: inline-block;
+        border: 2px dashed #BBB;
+        padding: 25px;
+        text-align: center;
+        font: 20pt bold 'Vollkorn';
+        max-width: 400px;
+        min-width: 360px;
+        height: auto;
+        position: relative;
+        margin-bottom: 50px;
+      }
+
+     /** Displays the dragged or selected files. */
+      div.files-list {
+        vertical-align:top;
+        display: inline-block;
+        padding: 20px 20px 30px 20px;
+        border: dashed 2px #ccc;
+        background: #fefefe;
+        max-width: 400px;
+        min-width: 300px;
+        min-height: 240px;
+        height: auto;
+        position: relative;
+        margin-bottom: 50px;
+      }
+
+      /**
+       * Little breathing space for the files list iff drop zone is previous
+       * sibling.
+       */
+      div.drop-zone + div.files-list {
+        margin-left: 20px;
+      }
+
+      div.files-list a#reset {
+        position: absolute;
+        top: 10px;
+        right: 10px;
+        color: #ccc;
+        text-decoration: none;
+      }
+
+      div.files-list ul {
+        margin: 0;
+        position: relative;
+      }
+
+      div.files-list ul li {
+        position: relative;
+        border-bottom: solid 1px #ccc;
+      }
+
+      /** Display the uploaded files metadata such as file name, mime types etc. */
+      div.files-list p {
+        text-align: center;
+        font-size: 13px;
+        line-height: 8px;
+      }
+
+      div.files-list a#reset:hover {
+        color: #333;
+      }
+
+      div.files-list a#upload {
+        color: #000;
+        position: absolute;
+        bottom: 10px;
+        right: 10px;
+        background-color: #D5DFF3;
+        padding: 4px 6px;
+        text-decoration: none;
+        font-weight: bold;
+      }
+   </style>
+  <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+</head>
+<body>
+ <form enctype="multipart/form-data" method="POST" action="">
+   <input type="file" name="uploaded_files" multiple="multiple" />
+ </form>
+ <!-- No use other than display:block.-->
+  <div class="drop-zone">Drop files here</div>
+  <div class="files-list">
+     <a id="reset" href="#" title="Remove all files from list">Clear list</a>
+     <div style="border-bottom:solid 1px #CCC">File List</div>
+      <!-- Assumed to exist to display the file list. -->
+      <ul id="list"></ul>
+      <a id="upload" href="#" title="Upload all files in list">Upload files</a>
+  </div>
+ </div>
+ <div style="display:block">
+   <div style="display:inline-block;padding:10px 0" class="kd-butterbar mini message">
+    <span></span>
+   </div>
+</div>
+<script type="text/javascript" src = "deps_html.js"></script>
+<script type="text/javascript">
+  goog.require('goog.dom');
+  goog.require('goog.events.BrowserEvent');
+  goog.require('goog.events.EventTarget');
+  goog.require('goog.events.EventType');
+  goog.require('goog.events.FileDropHandler');
+  goog.require('goog.testing.MockControl');
+  goog.require('goog.testing.events');
+  goog.require('goog.testing.jsunit');
+  goog.require('goog.testing.mockmatchers');
+  goog.require('treasury.testing.MockXmlHttpRequest');
+  goog.require('treasury.ui.FileUploader');
+</script>
+<script type="text/javascript">
+  var inputField;
+  var ownerDocument;
+  var dropZone;
+  var fileReader;
+  var fileList;
+  var fileDropHandler;
+  var fileUploader;
+  var mockControl;
+  var readDataAsUrl;
+  var propertyReplacer;
+
+  function setUp() {
+    readDataAsUrl = false;
+    mockControl = new goog.testing.MockControl();
+    inputField = new goog.events.EventTarget();
+
+    // Setting file drop handler.
+    dropZone = document.getElementsByClassName('drop-zone')[0];
+    fileDropHandler = new goog.events.FileDropHandler(dropZone, true);
+
+    fileReader = new goog.events.EventTarget();
+    fileList = document.querySelector('.files-list');
+    fileUploader =
+        new treasury.ui.FileUploader('', inputField, fileList, fileDropHandler);
+  }
+
+  function tearDown() {
+    readDataAsUrl = false;
+    mockControl.$tearDown();
+    inputField.dispose();
+    fileReader.dispose();
+    fileDropHandler.dispose();
+    fileUploader.dispose();
+    var ul = fileList.querySelector('ul');
+    goog.dom.removeChildren(ul);
+    assertEquals(0, goog.events.getTotalListenerCount());
+  }
+
+  /** Verifies that the file drag and drop is triggered. */
+  function testFileUploaderDragAndDrop() {
+    var expectedFile = {name: 'file1.csv', type: 'text/csv', size: 1024};
+    var dt = {files: [expectedFile]};
+    var fileDropEvent = new goog.events.BrowserEvent(
+        {dataTransfer: dt, type: goog.events.EventType.DROP});
+    var fileReaderMock =
+        mockControl.createConstructorMock(window, 'FileReader');
+    fileReaderMock().$returns(fileReader);
+    fileReader.readAsDataURL = function(f) {readDataAsUrl = true;};
+    mockControl.$replayAll();
+    try {
+      assertFalse(readDataAsUrl);
+      fileDropHandler.dispatchEvent(fileDropEvent);
+      assertTrue(readDataAsUrl);
+    } finally {
+      mockControl.$verifyAll();
+    }
+  }
+
+  /** Verifies that a change event is fired when a file is selected. */
+  function testFileSelection() {
+    var expectedFile = {name: 'file1.csv', type: 'text/csv', size: 1024};
+    var event = new goog.events.BrowserEvent(
+        {type: goog.events.EventType.CHANGE, target: {files: [expectedFile]}});
+    var fileReaderMock =
+        mockControl.createConstructorMock(window, 'FileReader');
+    fileReaderMock().$returns(fileReader);
+    fileReader.readAsDataURL = function(f) {readDataAsUrl = true;};
+    mockControl.$replayAll();
+    try {
+      assertFalse(readDataAsUrl);
+      inputField.dispatchEvent(event);
+      assertTrue(readDataAsUrl);
+    } finally {
+      mockControl.$verifyAll();
+    }
+  }
+
+  /**
+   * Verifies that the files to be uploaded is added to a list. The test also
+   * checks the HTML LI elements are inserted to a files list.
+   */
+  function testAddUploadedFilesToList() {
+    var expectedFile = {name: 'file1.csv', type: 'text/csv', size: 1024};
+    var event = new goog.events.BrowserEvent({target: {file: expectedFile}});
+    fileUploader.addUploadedFilesToList(event);
+    assertArrayEquals(fileUploader.getUploadedFiles(), [expectedFile]);
+    var lis = fileList.querySelectorAll('li');
+    assertEquals(1, lis.length);
+  }
+
+  /** Verifies that the file uploader successfully uploads the file.*/
+  function testUploadFiles() {
+    var expectedFile = {name: 'file1.csv', type: 'text/csv', size: 1024};
+    fileUploader.addUploadedFile(expectedFile);
+    // Mock FormData object. Passing a string as arguments breaks in FF but not
+    // in chrome.
+    var realFormData = new FormData();
+    var formData = mockControl.createLooseMock(realFormData);
+    var formDataConstructor =
+        mockControl.createConstructorMock(window, 'FormData');
+    formDataConstructor().$returns(formData);
+    var ignoreArg = new goog.testing.mockmatchers.IgnoreArgument();
+    formData.append(ignoreArg, ignoreArg).$times(1);
+    // Mock the XMLHttpRequest functions.
+    var xmlHttpRequest = new treasury.testing.MockXmlHttpRequest();
+    var xmlHttpRequestConstructorMock =
+        mockControl.createConstructorMock(window, 'XMLHttpRequest');
+    xmlHttpRequestConstructorMock().$returns(xmlHttpRequest);
+    // Mock the success and events for XMLHttpRequest.
+    mockControl.createMethodMock(fileUploader, 'showSuccess');
+    mockControl.createMethodMock(fileUploader, 'showError');
+    fileUploader.showSuccess(xmlHttpRequest);
+    fileUploader.showError(xmlHttpRequest);
+    mockControl.$replayAll();
+    try {
+      goog.testing.events.fireClickSequence(fileList.querySelector('a#upload'));
+      assertEquals(1, xmlHttpRequest.openFunctionCounter);
+      assertEquals(1, xmlHttpRequest.sendFunctionCounter);
+      var requestHeaders = xmlHttpRequest.getAllRequestHeaders();
+      assertElementsEquals(
+          requestHeaders, {'X-Requested-With': 'XMLHttpRequest'});
+   } finally {
+      mockControl.$verifyAll();
+    }
+  }
+
+  /**
+   * Verifies that list of uploaded files are cleared from the list when the
+   * reset button is clicked.
+   */
+  function testClearFiles() {
+    var li = document.createElement('li');
+    var ul = fileList.querySelector('ul');
+    ul.appendChild(li);
+    assertEquals(ul.childNodes.length, 1);
+    var expectedFile = {name: 'file1.csv', type: 'text/csv', size: 1024};
+    fileUploader.addUploadedFile(expectedFile);
+    assertEquals(fileUploader.getUploadedFiles().length, 1);
+    goog.testing.events.fireClickSequence(fileList.querySelector('a#reset'));
+    assertEquals(fileUploader.getUploadedFiles().length, 0);
+    assertEquals(ul.childNodes.length, 0);
+  }
+
+  /** Verifies that a success message is displayed on successful request. */
+  function testShowSuccessResponseReturns200() {
+    var xhr = new treasury.testing.MockXmlHttpRequest();
+    xhr.responseText =
+        '{"meta": {"code": 200, "data": {"report_date": "2012-05-31"}}}';
+    try {
+      // Register the event.
+      fileUploader.showSuccess(xhr);
+      xhr.dispatchEvent('load');
+      assertEquals(
+          document.querySelector('.message span').innerHTML,
+          'Files uploaded successfully. ' +
+          'Please refresh the page if uploaded for the first time.');
+    } finally {
+      xhr.dispose();
+    }
+  }
+
+  /** Verifies an error message from the response is returned. */
+  function testShowSuccessResponseReturnsErrorResponse() {
+     var xhr = new treasury.testing.MockXmlHttpRequest();
+     xhr.responseText =
+        '{"meta": {"code": 404, "errorMessage": "Resource not found."}}';
+     try {
+      // Register the event.
+      fileUploader.showSuccess(xhr);
+      xhr.dispatchEvent('load');
+      assertEquals(
+          document.querySelector('.message span').innerHTML,
+          'Resource not found.');
+    } finally {
+      xhr.dispose();
+    }
+  }
+
+  function testShowErrorResponse() {
+    var xhr = new treasury.testing.MockXmlHttpRequest();
+    try {
+      fileUploader.showError(xhr);
+      xhr.dispatchEvent('error');
+      assertEquals(
+          document.querySelector('.message span').innerHTML,
+          'The files could not be uploaded.');
+    } finally {
+      xhr.dispose();
+    }
+  }
+</script>

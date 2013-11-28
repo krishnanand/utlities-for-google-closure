@@ -1,0 +1,252 @@
+<!--
+ * Copyright (C) 2013 Google Inc
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ -->
+
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Striped Table</title>
+  <style type="text/css">
+    .odd {
+      background-color: #EEE;
+    }
+    .even {
+      background-color: #FFF;
+    }
+  </style>
+</head>
+<body>
+<div id="divTable">
+  <table id="tableExample">
+  <thead>
+    <tr>
+      <th>Number</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>3</td>
+    </tr>
+    <tr style="display:none">
+      <td>4</td>
+    </tr>
+    <tr>
+      <td>5</td>
+    </tr>
+    <tr>
+       <td>6</td>
+    </tr>
+    <tr class="hideSelector">
+      <td>7</td>
+    </tr>
+    <tr>
+      <td>8</td>
+    </tr>
+    <tr>
+      <td>9</td>
+    </tr>
+    <tr>
+      <td class="expand" data-toggle="collapse" data-parent="table#tableExample>tbody" data-target="#target" data-collapse="true">10</td>
+    </tr>
+    <tr class="hide" id="target">
+      <td>11</td>
+    </tr>
+    <tr>
+      <td>12</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+</body>
+<script src="deps_html.js"></script>
+<script type="text/javascript">
+  goog.require('goog.array');
+  goog.require('goog.dom');
+  goog.require('goog.dom.classes');
+  goog.require('goog.events.EventType');
+  goog.require('goog.testing.events');
+  goog.require('goog.testing.jsunit');
+  goog.require('treasury.testing.utils');
+  goog.require('treasury.ui.Collapse');
+  goog.require('treasury.ui.MultiRowTableSorter');
+  goog.require('treasury.ui.StripedTable');
+</script>
+<script type="text/javascript">
+  var divTableElem = goog.dom.getElement('divTable');
+  var divTableElemInnerHtml = divTableElem.innerHTML;
+  var tableElem = goog.dom.getElement('tableExample');
+  var tableElemInnerHtml = tableElem.innerHTML;
+  var stripedTable;
+  var stripedTableWithTableSorter;
+  var stripedTableWithCollapse;
+  var stripedTableWithHideSelector;
+  var stripedTableWithOddSelector;
+  var stripedTableWithEvenSelector;
+  var tableSorter;
+  var tableHeader;
+  var collapseElem;
+
+  function setUp() {
+    divTableElem.innerHTML = divTableElemInnerHtml;
+    tableElem.innerHTML = tableElemInnerHtml;
+    stripedTable = new treasury.ui.StripedTable();
+    tableSorter = new treasury.ui.MultiRowTableSorter();
+    stripedTableWithTableSorter =
+        new treasury.ui.StripedTable(true, 'hide', 'odd', 'even', tableSorter);
+    stripedTableWithCollapse = new treasury.ui.StripedTable(true);
+    stripedTableWithHideSelector =
+        new treasury.ui.StripedTable(true, 'hideSelector');
+    stripedTableWithOddSelector =
+        new treasury.ui.StripedTable(true, 'hide', 'oddSelector');
+    stripedTableWithEvenSelector =
+        new treasury.ui.StripedTable(true, 'hide', 'odd', 'evenSelector');
+
+    tableHeader = tableElem.getElementsByTagName('TH')[0];
+    collapseElem =
+         document.querySelector('[data-toggle=collapse]');
+  }
+
+  function tearDown() {
+    stripedTable.dispose();
+    stripedTableWithTableSorter.dispose();
+    stripedTableWithCollapse.dispose();
+    stripedTableWithHideSelector.dispose();
+    stripedTableWithOddSelector.dispose();
+    stripedTableWithEvenSelector.dispose();
+  }
+
+  /**
+   * Verifies that all the rows have appropriate class selectors without any
+   * filtering taking place.
+   */
+  function testStripedTableWithoutAnyFilters() {
+    stripedTable.decorate(tableElem);
+    var tableRows = tableElem.tBodies[0].rows;
+    goog.array.forEach(tableRows, function(tableRow, idx) {
+        if (idx % 2 == 0) {
+          assertTrue(goog.dom.classes.has(tableRow, 'even'));
+        } else {
+          assertTrue(goog.dom.classes.has(tableRow, 'odd'));
+        }
+    });
+  }
+
+  /**
+   * Verifies that all the rows have appropriate class selectors after filtering
+   * for hidden rows and hide selectors.
+   */
+  function testStripledTableWithHideSelectorConfigured() {
+    stripedTableWithHideSelector.decorate(tableElem);
+    var tableRows =
+        goog.array.filter(tableElem.tBodies[0].rows, function(row) {
+            return row.style.display != 'none' &&
+                !goog.dom.classes.has(row, 'hideSelector');
+        });
+    goog.array.forEach(tableRows, function(tableRow, idx) {
+        if (idx % 2 == 0) {
+          assertTrue(goog.dom.classes.has(tableRow, 'even'));
+        } else {
+          assertTrue(goog.dom.classes.has(tableRow, 'odd'));
+        }
+    });
+  }
+
+  /**
+   * Verifies that odd rows have appropriate class selectors after filtering
+   * for hidden rows and hide selector.
+   */
+  function testStripedTableWithOddSelectorConfigured() {
+    stripedTableWithOddSelector.decorate(tableElem);
+    var tableRows =
+        goog.array.filter(tableElem.tBodies[0].rows, function(row) {
+          return row.style.display != 'none' &&
+              !goog.dom.classes.has(row, 'hide');
+        });
+    goog.array.forEach(tableRows, function(tableRow, idx) {
+        if (idx % 2 == 0) {
+          assertTrue(goog.dom.classes.has(tableRow, 'even'));
+        } else {
+          assertTrue(goog.dom.classes.has(tableRow, 'oddSelector'));
+        }
+    });
+  }
+
+  /**
+   * Verifies that even rows have appropriate class selectors after filtering
+   * for hidden rows and selectors.
+   */
+  function testStripedTableWithEvenSelectorConfigured() {
+    stripedTableWithEvenSelector.decorate(tableElem);
+    var tableRows =
+        goog.array.filter(tableElem.tBodies[0].rows, function(row) {
+          return row.style.display != 'none' &&
+              !goog.dom.classes.has(row, 'hide');
+        });
+    goog.array.forEach(tableRows, function(tableRow, idx) {
+        if (idx % 2 == 0) {
+          assertTrue(goog.dom.classes.has(tableRow, 'evenSelector'));
+        } else {
+          assertTrue(goog.dom.classes.has(tableRow, 'odd'));
+        }
+    });
+  }
+
+  /**
+   * Verifies that zebra stripes are applied to the table again after table
+   * sorting.
+   */
+  function testStripedTableWithTableSorting() {
+    stripedTableWithTableSorter.decorate(tableElem);
+    // Reverse the sorting order.
+    goog.testing.events.fireClickSequence(tableHeader);
+    goog.testing.events.fireClickSequence(tableHeader);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['12', '10', '9', '8', '7', '6', '5', '3', '2', '1'],
+        'hide');
+    var tableRows =
+        goog.array.filter(tableElem.tBodies[0].rows, function(row) {
+          return row.style.display != 'none' &&
+              !goog.dom.classes.has(row, 'hide');
+        });
+    goog.array.forEach(tableRows, function(tableRow, idx) {
+      if (idx % 2 == 0) {
+        assertTrue(goog.dom.classes.has(tableRow, 'even'));
+      } else {
+        assertTrue(goog.dom.classes.has(tableRow, 'odd'));
+      }
+    });
+  }
+
+  /**
+   * Verifies that zebra stripes are still applied after collapse and expand.
+   */
+  function testStripedTableWithCollapse() {
+    stripedTableWithCollapse.initCollapse(
+       document.querySelectorAll('[data-toggle=collapse]'));
+    stripedTableWithCollapse.decorate(tableElem);
+    goog.testing.events.fireClickSequence(collapseElem);
+    var tableElement = document.querySelector('table');
+    treasury.testing.utils.assertTableElementOrder(
+       tableElement,
+       ['1', '2', '3', '5', '6', '7', '8', '9', '10', '11', '12'], 'hide');
+  }
+</script>
+</html>

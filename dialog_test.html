@@ -1,0 +1,226 @@
+<!--
+ * Copyright (C) 2013 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+-->
+<!DOCTYPE HTML>
+<html>
+  <head>
+     <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+     <title>Modal Dialog Test.</title>
+  </head>
+  <body>
+    <div id="content">
+      <article class="modal-contents">
+        <h1>Avgrund</h1>
+        <p>A modal concept which aims to give a sense of depth between the page and modal layers. Click the button below to give it a try.</p>
+        <button class="button" name="openmodal">Open Modal</button>
+      </article>
+      <aside id="default-popup" class="avgrund-popup">
+        <h2>That's all, folks</h2>
+        <p>Close Modal</p>
+        <button name="closemodal">Close</button>
+        <button name="proceed">Proceed</button>
+      </aside>
+    </div>
+   <!-- Tests start. -->
+   <script src="deps_html.js"></script>
+   <script type="text/javascript">
+      goog.require('goog.events');
+      goog.require('goog.testing.events');
+      goog.require('goog.testing.jsunit');
+      goog.require('treasury.ui.ModalDialog');
+      goog.require('treasury.ui.ModalEventType');
+    </script>
+    <script type="text/javascript">
+      var divContent = document.getElementById('content');
+      var divContentInnerHtml = divContent.innerHTML;
+
+      var modalDialog = null;
+      var modalElement = null;
+      var openModalButton = document.querySelector('button[name=openmodal]');
+      var closeModalButton = document.querySelector('button[name=closemodal]');
+      var proceedButton = document.querySelector('button[name=proceed]');
+
+      /** Sets up the test bed. */
+      function setUp() {
+        divContent.innerHTML = divContentInnerHtml;
+        modalElement = document.querySelector('#default-popup');
+        modalDialog = new treasury.ui.ModalDialog(
+            modalElement, openModalButton, closeModalButton, proceedButton);
+        modalDialog.initializeModalEvents();
+      }
+
+      /** Tears down the test bed. */
+      function tearDown() {
+        modalDialog.dispose();
+      }
+
+      /**
+       * Tests that the class selector is added and an event is dispatched.
+       */
+      function testActivateModalOnClickOpenModalButton() {
+        var initVariable = 100;
+        goog.events.listen(
+            modalDialog, treasury.ui.ModalEventType.MODALACTIVATED,
+            function(event) {
+              initVariable = 150;
+            });
+        goog.testing.events.fireClickSequence(openModalButton);
+        assertTrue(
+            modalElement.classList.contains('modal-ready-popup-animate'));
+        assertEquals(initVariable, 150);
+      }
+
+      /**
+       * Tests that the class selector is added to a modal element and an event
+       * is dispatched.
+       */
+      function testActivateModalOnTouchOpenModalButton() {
+        var initVariable = 100;
+        goog.events.listen(
+            modalDialog, treasury.ui.ModalEventType.MODALACTIVATED,
+            function(event) {
+              initVariable = 150;
+            });
+        goog.testing.events.fireTouchStartEvent(openModalButton);
+        assertTrue(
+            modalElement.classList.contains('modal-ready-popup-animate'));
+        assertEquals(initVariable, 150);
+      }
+
+      /**
+       * Verifies that the class selector is removed and an event is
+       * dispatched on a deactive modal event.
+       */
+      function testDeactivateModalOnClickCloseModalButton() {
+        var initVariable = 100;
+        goog.events.listen(
+            modalDialog, treasury.ui.ModalEventType.MODALDEACTIVATED,
+            function(event) {
+              initVariable = 200;
+            });
+        modalElement.classList.add('modal-ready-popup-animate');
+        goog.testing.events.fireClickSequence(closeModalButton);
+        assertFalse(
+            modalElement.classList.contains('modal-ready-popup-animate'));
+        assertEquals(initVariable, 200);
+      }
+
+      /**
+       * Verifies that the class selector is removed and an event is
+       * dispatched on a deactive modal event.
+       */
+      function testDeactivateModalOnTouchCloseModalButton() {
+        var initVariable = 100;
+        goog.events.listen(
+            modalDialog, treasury.ui.ModalEventType.MODALDEACTIVATED,
+            function(event) {
+              initVariable = 200;
+            });
+        modalElement.classList.add('modal-ready-popup-animate');
+        goog.testing.events.fireTouchStartEvent(closeModalButton);
+        assertFalse(
+            modalElement.classList.contains('modal-ready-popup-animate'));
+        assertEquals(initVariable, 200);
+      }
+
+      /**
+       * Verifies that an initiate action event is dispatched.
+       */
+      function testInitiateActionOnClickProceedButton() {
+        var initVariable = 100;
+        goog.events.listen(
+            modalDialog, treasury.ui.ModalEventType.MODALACTION,
+            function(event) {
+              initVariable = 250;
+            });
+        goog.testing.events.fireClickSequence(proceedButton);
+        assertEquals(initVariable, 250);
+      }
+
+      /**
+       * Verifies that an initiate action event is dispatched.
+       */
+      function testInitiateActionOnTouchProceedButton() {
+        var initVariable = 100;
+        goog.events.listen(
+            modalDialog, treasury.ui.ModalEventType.MODALACTION,
+            function(event) {
+              initVariable = 250;
+            });
+        goog.testing.events.fireTouchStartEvent(proceedButton);
+        assertEquals(initVariable, 250);
+      }
+
+      /**
+       * Verifies that the modal is deactivated on pressing escape key.
+       */
+      function testDeactivateModalOnPressingEscapeKeySuccess() {
+        var initVariable = 100;
+        goog.events.listen(
+            modalDialog, treasury.ui.ModalEventType.MODALDEACTIVATED,
+            function(event) {
+              initVariable = 300;
+            });
+        modalElement.classList.add('modal-ready-popup-animate');
+        goog.testing.events.fireKeySequence(
+            document.querySelector('article.modal-contents'), 27);
+        assertFalse(
+            modalElement.classList.contains('modal-ready-popup-animate'));
+        assertEquals(initVariable, 300);
+      }
+
+      /**
+       * Verifies that the modal is not deactivated by pressing other keys.
+       */
+      function testDeactivateModalOnPressingAnyOtherKeyFailure() {
+        modalElement.classList.add('modal-ready-popup-animate');
+        // Shift key pressed.
+        goog.testing.events.fireKeySequence(
+            document.querySelector('article.modal-contents'), 16);
+        assertTrue(
+            modalElement.classList.contains('modal-ready-popup-animate'));
+         goog.testing.events.fireKeySequence(document, 13);
+        assertTrue(
+            modalElement.classList.contains('modal-ready-popup-animate'));
+      }
+
+      /**
+       * Verifies that the modal is deactivated by clicking outside the modal
+       * window.
+       */
+      function testDeactivateModalOnClickingOutsideModalWindow() {
+        var initVariable = 100;
+        goog.events.listen(
+            modalDialog, treasury.ui.ModalEventType.MODALDEACTIVATED,
+            function(event) {
+              initVariable = 350;
+            });
+        modalElement.classList.add('modal-ready-popup-animate');
+        goog.testing.events.fireClickSequence(
+            document.querySelector('article.modal-contents'));
+        assertFalse(
+            modalElement.classList.contains('modal-ready-popup-animate'));
+        assertEquals(initVariable, 350);
+        // Fire another event by clicking on document.
+        initVariable = 150;
+        modalElement.classList.add('modal-ready-popup-animate');
+        goog.testing.events.fireClickSequence(document);
+        assertFalse(
+            modalElement.classList.contains('modal-ready-popup-animate'));
+        assertEquals(initVariable, 350);
+      }
+    </script>
+  </body>
+</html>

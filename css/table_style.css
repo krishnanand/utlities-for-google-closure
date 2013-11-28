@@ -1,0 +1,134 @@
+/*
+ * Copyright (C) 2013 Google Inc
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+
+/**
+ * Standard table definitions.
+ */
+
+/** TODO(kartik): Set up media queries. */
+table.standard {
+  background-color:#EEEEEE;
+  width:100%;
+  font-size:8pt;
+  padding:4px;
+  border:0px;
+  solid #CCCCCC;
+  text-align:right;
+}
+
+table.standard td, th {
+  padding:4px;
+}
+
+table.standard thead.header tr {
+  font-weight:bold;
+  background-color:#E5ECF9;
+  color:#3366CC;
+  text-align:center
+}
+
+.bold {
+  font-weight: bold;
+}
+
+.bold.top-border {
+  border-top: 1px solid #BBBBBB;
+}
+
+table.solid-border {
+  border: 1px solid black;
+}
+table[class*="tablesorter"] {
+  font-family:arial;
+  font-size: 8pt;
+  margin-bottom: 20px;
+}
+table.tablesorter {
+  width: 100%;
+}
+/** Encapsulating this via media queries. */
+/** Keep adding small sizes here. */
+table.tablesorter1 {
+  width: 11%;
+}
+table.tablesorter3 {
+  width: 20%;
+}
+table.tablesorter3 {
+  width: 31%;
+}
+table.tablesorter4 {
+  width: 40%;
+}
+table.tablesorter5 {
+  width: 48%;
+}
+table.tablesorter6 {
+  width: 57%;
+}
+table.tablesorter7 {
+  width: 67%;
+}
+table.tablesorter8 {
+  width: 78%;
+}
+table.tablesorter9 {
+  width: 89%;
+}
+table[class*="tablesorter"] thead tr th,
+table[class*="tablesorter"] tfoot tr th {
+  background-color: #E5ECF9;
+  border: 1px solid #CCCCCC;
+  font-size: 8pt;
+  padding: 4px;
+}
+table[class*="tablesorter"] thead tr .header {
+  background-image: url(../../static/images/bg.gif);
+  background-repeat: no-repeat;
+  background-position: right;
+  cursor: pointer;
+  padding-right: 15px;
+}
+table[class*="tablesorter"] tbody td {
+  color: #3D3D3D;
+  padding: 4px;
+  background-color: #FFF;
+  vertical-align: top;
+}
+table[class*="tablesorter"] tbody tr.odd td {
+  background-color:#F0F0F6;
+}
+table[class*="tablesorter"] thead tr .headerSortUp {
+  background-image: url(../../static/images/asc.gif);
+}
+table[class*="tablesorter"] thead tr .headerSortDown {
+  background-image: url(../../static/images/desc.gif);
+}
+table[class*="tablesorter"] thead tr .headerSortDown,
+table[class*="tablesorter"] thead tr .headerSortUp {
+  background-color: #CCCCFF;
+}
+
+/** Table level warnings and info. */
+table tbody tr.table-warning > td,
+table tbody tr.table-warning.odd > td,
+table tbody tr.table-warning.even > td {
+  background-color: #FFFF66;
+}
+
+table tbody tr.strike-through > td {
+  text-decoration: line-through;
+}

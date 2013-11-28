@@ -1,0 +1,320 @@
+<!--
+ * Copyright (C) 2013 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+-->
+<!DOCTYPE html>
+<html>
+  <head>
+   <meta http-equiv="Content-Type" content="text/html;charset=UTF-8">
+    <title>Multi Row TableSorter With Pagination Test.</title>
+  <style type="text/css">
+    tbody tr:nth-child(2n+1) {
+      background-color: #eee;
+    };
+
+    tbody tr:nth-child(2n) {
+      background-color: #fff;
+    };
+  </style>
+</head>
+<body>
+<div id="divTable">
+  <table border="0" id="sortPaginate" class="tablesorter">
+  <thead>
+    <tr>
+      <th>Number</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+    </tr>
+    <tr>
+      <td>2</td>
+    </tr>
+    <tr>
+      <td>3</td>
+    </tr>
+    <tr>
+      <td>4</td>
+    </tr>
+    <tr>
+      <td>5</td>
+    </tr>
+    <tr>
+       <td>6</td>
+    </tr>
+    <tr>
+      <td>7</td>
+    </tr>
+    <tr>
+      <td>8</td>
+    </tr>
+    <tr>
+      <td>9</td>
+    </tr>
+    <tr>
+      <td>10</td>
+    </tr>
+    <tr>
+      <td>11</td>
+    </tr>
+    <tr>
+      <td>12</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<div id="pagerParent">
+<div id="pager">
+  <img src="images/first.png" alt="First Page" class="first"/>
+  <img src="images/prev.png" alt="Previous Page" class="prev"/>
+  <input type="text" class="pagedisplay">
+  <img src="images/next.png" alt="Next Page" class="next" />
+  <img src="images/last.png" alt="Last Page" class="last" />
+  <select name="test" class="pagesize" style="width:auto">
+   <option value="2">2</option>
+   <option value="3" selected="selected">3</option>
+   <option value="4">4</option>
+   <option value="6">6</option>
+  </select>
+</div>
+</div>
+<script src="deps_html.js"></script>
+<script type="text/javascript">
+  goog.require('goog.dom');
+  goog.require('goog.events');
+  goog.require('goog.testing.events');
+  goog.require('goog.testing.jsunit');
+  goog.require('treasury.testing.utils');
+  goog.require('treasury.ui.MultiRowTableSorter');
+  goog.require('treasury.ui.Paginator');
+</script>
+<script type="text/javascript">
+  // TableSorter initialization.
+  var divElem = goog.dom.getElement('divTable');
+  var divElemInnerHtml = divElem.innerHTML;
+  var tableElem;
+  var headerElem;
+  var tableSorter;
+
+  // Set up pagination elements.
+  var pagerParentElem = goog.dom.getElement('pagerParent');
+  var pagerParentInnerHtml = pagerParentElem.innerHTML;
+  var paginationElement;
+  var prevElem;
+  var lastElem;
+  var firstElem;
+  var nextElem;
+  var pageSizeElement;
+  var paginator;
+  var tableSorter;
+
+  /** Sets up the test bed. */
+  function setUp() {
+    divElem.innerHTML = divElemInnerHtml;
+    tableElem = goog.dom.getElement('sortPaginate');
+    headerElem = tableElem.getElementsByTagName('TH')[0];
+    pagerParentElem = pagerParentInnerHtml;
+    paginationElement = goog.dom.getElement('pager');
+    tableSorter = new treasury.ui.MultiRowTableSorter();
+    paginator = new treasury.ui.Paginator(paginationElement, null, tableSorter);
+    // Reset the drop down value.
+    prevElem = goog.dom.getElementsByClass('prev', paginationElement)[0];
+    lastElem = goog.dom.getElementsByClass('last', paginationElement)[0];
+    firstElem = goog.dom.getElementsByClass('first', paginationElement)[0];
+    nextElem = goog.dom.getElementsByClass('next', paginationElement)[0];
+    pageSizeElement =
+        goog.dom.getElementsByTagNameAndClass(
+            'select', 'pagesize', paginationElement)[0];
+    pageSizeElement.value = '3';
+  }
+
+  /** Tears down the test bed. */
+  function tearDown() {
+    paginator.dispose();
+    assertEquals(0, goog.events.getTotalListenerCount());
+  }
+
+  /**
+   * Verifies the following use case.
+   * 1. If first page id displayed and the columns are reversed, and
+   * 2. the user clicks on previous button,
+   * 3. the user should see the digits in reverse order for the first page.
+   */
+  function testPaginationOnClickingPrev() {
+    paginator.decorate(tableElem);
+    // Click twice to reverse sequence.
+    goog.testing.events.fireClickSequence(headerElem);
+    goog.testing.events.fireClickSequence(headerElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['12', '11', '10']);
+    // Click on the prev button.
+    goog.testing.events.fireClickSequence(prevElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['12', '11', '10']);
+  }
+
+  /**
+   * Verifies the following use case:
+   *  1. If first page is displayed and the columns are reversed,
+   *  2. and the user clicks on the next button,
+   *  3. the user should see the digits associated with the page on the second
+         page.
+   */
+  function testPaginationOnClickingNextAfterSort() {
+    paginator.decorate(tableElem);
+    // Click twice to reverse sequence.
+    goog.testing.events.fireClickSequence(headerElem);
+    goog.testing.events.fireClickSequence(headerElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['12', '11', '10']);
+    // Click on the prev button.
+    goog.testing.events.fireClickSequence(nextElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['9', '8', '7']);
+  }
+
+   /**
+   * Verifies the following use case:
+   *  1. If first page is displayed and the columns are reversed,
+   *  2. and the user clicks on the next button twice, the user should see the
+   * digits associated with the third page.
+   */
+  function testPaginationOnClickingNextTwiceAfterSort() {
+    paginator.decorate(tableElem);
+    // Click twice to reverse sequence.
+    goog.testing.events.fireClickSequence(headerElem);
+    goog.testing.events.fireClickSequence(headerElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['12', '11', '10']);
+    // Click on the prev button.
+    goog.testing.events.fireClickSequence(nextElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['9', '8', '7']);
+    goog.testing.events.fireClickSequence(nextElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['6', '5', '4']);
+  }
+
+  /**
+   * Verifies the following use case:
+   * 1. If the first page is displayed, and
+   * 2. the user clicks the next page,
+   * 3. the user should see the elements associated associated with the second
+   *    page.
+   * 4. the user reverses the columns.
+   * 5. the user should see the elements associated with what used to be the
+   *    second page.
+   */
+  function testPaginationOnClickingNextBeforeSort() {
+    paginator.decorate(tableElem);
+    goog.testing.events.fireClickSequence(nextElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['4', '5', '6']);
+    // Click twice to reverse sequence.
+    goog.testing.events.fireClickSequence(headerElem);
+    goog.testing.events.fireClickSequence(headerElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['9', '8', '7']);
+  }
+
+  /**
+   * Verifies the following use case:
+   * 1. If the first page is displayed, and
+   * 2. the user clicks the next page twice,
+   * 3. the user should see the elements associated associated with the third
+   *    page.
+   * 4. the user reverses the columns.
+   * 5. the user should see the elements associated with what used to be the
+   *    third page.
+   * 6. the user clicks the previous page.
+   * 7. the user should see the elements associated with what used to be the
+   *    third page.
+   */
+  function testPaginationOnClickingNextTwiceThenPrevBeforeSort() {
+    paginator.decorate(tableElem);
+    goog.testing.events.fireClickSequence(nextElem);
+    goog.testing.events.fireClickSequence(nextElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['7', '8', '9']);
+    // Click twice to reverse sequence.
+    goog.testing.events.fireClickSequence(headerElem);
+    goog.testing.events.fireClickSequence(headerElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['6', '5', '4']);
+    goog.testing.events.fireClickSequence(prevElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['9', '8', '7']);
+    goog.testing.events.fireClickSequence(prevElem);
+  }
+
+  /**
+   * Verifies the following use case:
+   * 1. If the first page is displayed and set to sort in descending order, and
+   * 2. the user clicks the last page.
+   * 3. the user should see elements associated with the last page.
+   * 4. the user then sorts in ascending order.
+   * 5. the user clicks on the first page button.
+   * 6. the user should see the first page.
+   */
+  function testPaginationOnClickingLastBeforeSortAndClickFirst() {
+    tableSorter.setReverseSortingIndex(0);
+    paginator.decorate(tableElem);
+    goog.testing.events.fireClickSequence(headerElem);
+    goog.testing.events.fireClickSequence(lastElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['3', '2', '1']);
+    // Sort in ascending order.
+    goog.testing.events.fireClickSequence(headerElem);
+    // Click the first button.
+    goog.testing.events.fireClickSequence(firstElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['1', '2', '3']);
+  }
+
+  /**
+   * Verifies the following use case:
+   * 1. The user changes the number of rows to be displayed per page to 4.
+   * 2. The page is reordered to show 4 elements.
+   * 3. The user clicks the next "last page"
+   * 4. The page is reordered to show the last 4 elements.
+   * 5. The user clicks the header to initiate reverse sort.
+   * 6. The user clicks the previous page button.
+   */
+  function testPaginationOnChangingPageOptionsBeforeSort() {
+    tableSorter.setReverseSortingIndex(0);
+    paginator.decorate(tableElem);
+    pageSizeElement.value = 4;
+    goog.testing.events.fireBrowserEvent(
+        new goog.events.Event(goog.events.EventType.CHANGE, pageSizeElement));
+    // Change the number of elements to be displayed per page.
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['1', '2', '3', '4']);
+    // Click the "last page" icon.
+    goog.testing.events.fireClickSequence(lastElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['9', '10', '11', '12']);
+    // Start reverse sort.
+    goog.testing.events.fireClickSequence(headerElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['4', '3', '2', '1']);
+    // Click the "previous page" button.
+    goog.testing.events.fireClickSequence(prevElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['8', '7', '6', '5']);
+  }
+</script>
+</body>
+</html>

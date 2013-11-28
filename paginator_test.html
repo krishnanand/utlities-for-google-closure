@@ -1,0 +1,221 @@
+<!--
+ * Copyright (C) 2013 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+-->
+<!-- Table paginator. -->
+<!DOCTYPE html>
+<html>
+<head>
+<title>Table Pagination Test.</title>
+<meta charset="utf-8">
+<style type="text/css" media="screen">
+  tbody tr:nth-child(odd) {
+    background-color: #eee;
+  }
+
+  tbody tr:nth-child(even) {
+    background-color: #fff;
+  }
+</style>
+</head>
+<body>
+<div id = 'divTable'>
+  <table border="0" id="paginate">
+  <thead>
+    <tr>
+      <th>Number</th>
+      <th>Month</th>
+      <th>Days (non-leap year)</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>January</td>
+      <td>31</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>February</td>
+      <td>28</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>March</td>
+      <td>31</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>April</td>
+      <td>30</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>May</td>
+      <td>31</td>
+    </tr>
+    <tr>
+       <td>6</td>
+      <td>June</td>
+      <td>30</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>July</td>
+      <td>31</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>August</td>
+      <td>31</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>September</td>
+      <td>30</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>October</td>
+      <td>31</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td>November</td>
+      <td>30</td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td>December</td>
+      <td>31</td>
+    </tr>
+  </tbody>
+</table>
+</div>
+<div id="pagerParent">
+<div id="pager">
+  <img src="images/first.png" alt="First Page" class="first"/>
+  <img src="images/prev.png" alt="Previous Page" class="prev"/>
+  <input type="text" class="pagedisplay">
+  <img src="images/next.png" alt="Next Page" class="next" />
+  <img src="images/last.png" alt="Last Page" class="last" />
+  <select name="test" class="pagesize" style="width:auto">
+   <option value="2">2</option>
+   <option value="3" selected="selected">3</option>
+   <option value="4">4</option>
+   <option value="6">6</option>
+  </select>
+</div>
+</div>
+<script src = "deps_html.js"></script>
+<script type="text/javascript">
+  goog.require('goog.dom');
+  goog.require('goog.events');
+  goog.require('goog.events.EventType');
+  goog.require('goog.testing.events');
+  goog.require('goog.testing.jsunit');
+  goog.require('treasury.testing.utils');
+  goog.require('treasury.ui.Paginator');
+</script>
+<script type="text/javascript">
+  var divElem = document.getElementsByTagName('div')[0];
+  var divElemInnerHtml = divElem.innerHTML;
+  var pagerParent = goog.dom.getElement('pagerParent');
+  var pagerParentInnerHtml = pagerParent.innerHTML;
+  var pager = document.getElementById('pager');
+  var pageSizeElem =
+      goog.dom.getElementsByTagNameAndClass('select', 'pagesize', pager)[0];
+  var tableElem = document.getElementsByTagName('table')[0];
+  var paginator;
+  var tableRows =
+        goog.dom.getElementsByTagNameAndClass('tbody tr', null, tableElem);
+
+  function setUp() {
+    paginator = new treasury.ui.Paginator(pager);
+    divElem.innerHTML = divElemInnerHtml;
+    pagerParent.innerHTML = pagerParentInnerHtml;
+    pageSizeElem.value = '3';
+  }
+
+  function tearDown() {
+    paginator.dispose();
+    assertEquals(0, goog.events.getTotalListenerCount());
+  }
+
+  function testDecorateInternal() {
+    paginator.decorateInternal(tableElem);
+    treasury.testing.utils.assertTableElementOrder(
+      tableElem,
+      ['1', 'January', '31', '2', 'February', '28', '3', 'March', '31'],
+      assertArrayEquals);
+  }
+
+  /**
+   * Verifies that the first page is displayed if the user clicks on first.
+   */
+  function testClickOnFirst() {
+    paginator.decorate(tableElem);
+    var firstElem = goog.dom.getElementsByClass('first', pager)[0];
+    goog.testing.events.fireClickSequence(firstElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem,
+        ['1', 'January', '31', '2', 'February', '28', '3', 'March', '31']);
+  }
+
+  function testClickOnNext() {
+    paginator.decorate(tableElem);
+    var nextElem = goog.dom.getElementsByClass('next', pager)[0];
+    goog.testing.events.fireClickSequence(nextElem);
+    treasury.testing.utils.assertTableElementOrder(
+       tableElem, ['4', 'April', '30', '5', 'May', '31', '6', 'June', '30'],
+       assertArrayEquals);
+  }
+
+  function testClickOnPrev() {
+    paginator.decorate(tableElem);
+    var nextElem = goog.dom.getElementsByClass('next', pager)[0];
+    goog.testing.events.fireClickSequence(nextElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem, ['4', 'April', '30', '5', 'May', '31', '6', 'June', '30']);
+    var prevElement = goog.dom.getElementsByClass('prev', pager)[0];
+    goog.testing.events.fireClickSequence(prevElement);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem,
+        ['1', 'January', '31', '2', 'February', '28', '3', 'March', '31']);
+  }
+
+  function testClickOnLast() {
+    paginator.decorate(tableElem);
+    var lastElem = goog.dom.getElementsByClass('last', pager)[0];
+    goog.testing.events.fireClickSequence(lastElem);
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem,
+        ['10', 'October', '31', '11', 'November', '30', '12', 'December',
+         '31'], assertArrayEquals);
+  }
+
+  function testChangeRowsPerPage() {
+    paginator.decorate(tableElem);
+    // Show 6 elements per page.
+    pageSizeElem.value = 6;
+    goog.testing.events.fireBrowserEvent(
+        new goog.events.Event(goog.events.EventType.CHANGE, pageSizeElem));
+    treasury.testing.utils.assertTableElementOrder(
+        tableElem,
+        ['1', 'January', '31', '2', 'February', '28', '3', 'March', '31',
+         '4', 'April', '30', '5', 'May', '31', '6', 'June', '30']);
+  }
+</script>
+</body>
+</html>

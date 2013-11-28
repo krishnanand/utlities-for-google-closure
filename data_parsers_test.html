@@ -1,0 +1,187 @@
+<!--
+ * Copyright (C) 2013 Google Inc.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+-->
+
+<!--
+ * Unit test for data parsers.
+ -->
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta http-equiv="X-UA-Compatible" content="IE=edge" charset="utf-8">
+    <title>Data Parsers Test.</title>
+  </head>
+<body>
+<script src = "deps_html.js"></script>
+<script type = "text/javascript">
+  goog.require('goog.testing.jsunit');
+  goog.require('treasury.ui.DataParsers');
+</script>
+<script type = "text/javascript">
+
+var dataParsers = null;
+
+/** Sets up the test bed. */
+function setUp() {
+  dataParsers = treasury.ui.DataParsers.getDataParsers();
+  assertNotNull(dataParsers);
+}
+
+/** Sets up the parser. */
+function tearDown() {
+  dataParsers = null;
+}
+
+/** Verify that a big integers is correctly detected. */
+function testDigitParser() {
+  assertParserMetadata('1,234,567,89', 'digit', 123456789);
+}
+
+/** Verify that a floats is correctly detected. */
+function testDigitParserForFloat() {
+  assertParserMetadata('1,234,567.89', 'digit', 1234567.89);
+}
+
+/** Verify that a negative numbers is correctly detected. */
+function testDigitParserForNegativeNumbers() {
+  assertParserMetadata('-12.8932', 'digit', -12.8932);
+}
+
+/** Verify that a formatted numbers are correctly detected. */
+function testDigitParserForFormattedNumbers() {
+  assertParserMetadata('(54,855)', 'digit', -54855);
+}
+
+/** Verify that a positive numbers are correctly detected. */
+function testDigitParserForPositiveNumbers() {
+  assertParserMetadata('+125.8932', 'digit', 125.8932);
+}
+
+/** Verify that a USD currency numbers are correctly detected. */
+function testCurrencyParserForUSDCurrencyAmount() {
+  assertParserMetadata('$9,978,624,208', 'currency', 9978624208);
+}
+
+/** Verify that a EUR currency numbers are correctly detected. */
+function testCurrencyParserForEURCurrencyAmount() {
+  assertParserMetadata('€1,882,831,949', 'currency', 1882831949);
+}
+
+/** Verify that a JPY currency numbers are correctly detected. */
+function testCurrencyParserForJPYCurrencyAmount() {
+  assertParserMetadata('¥7,022,960,000', 'currency', 7022960000);
+}
+
+/** Verify that a GBP currency numbers are correctly detected. */
+function testCurrencyParserForGBPCurrencyAmount() {
+  assertParserMetadata('£5,000,00', 'currency', 500000);
+}
+
+/** Verify that a formatted USD currency numbers are correctly detected. */
+function testCurrencyParserForFormattedAmounts() {
+  assertParserMetadata('($500)', 'currency', -500);
+}
+
+/** Verify that a complete date is correctly detected. */
+function testUsLongDateParserWithCompleteDateMorningWithMissingMilliseconds() {
+  assertParserMetadata('January 5, 2011, 9:30 AM', 'usLongDate', 1294248600000);
+}
+
+/** Verify that a complete date is correctly detected. */
+function testUsLongDateParserWithCompleteDateMorningWithMilliseconds() {
+  assertParserMetadata(
+      'January 5, 2011, 9:30:33 AM', 'usLongDate', 1294248600000);
+}
+
+/** Verify that a complete date is correctly detected. */
+function testUsLongDateParserWithCompleteDateEveningWithMilliseconds() {
+  assertParserMetadata(
+      'February 29, 2012, 12:30 PM', 'usLongDate', 1330547400000);
+}
+
+/** Verify that a complete date is correctly detected. */
+function testUsLongDateParserWithCompleteDateEveningWithMissingMilliseconds() {
+  assertParserMetadata(
+      'February 29, 2012, 12:30:41 PM', 'usLongDate', 1330547400000);
+}
+
+/** Verify that a short date is correctly detected. */
+function testShortDateParserOne() {
+  assertParserMetadata('2011-04-12', 'shortDate', 1302591600000);
+}
+
+/** Verify that a short date is correctly detected. */
+function testShortDateParserTwo() {
+  assertParserMetadata('2011/04/12', 'shortDate', 1302591600000);
+}
+
+/** Verify that a short time is correctly detected. */
+function testTimeParserParserOne() {
+  assertParserMetadata('9:30 am', 'time', 946747800000);
+}
+
+/** Verify that a short time is correctly detected. */
+function testTimeParserTwo() {
+  assertParserMetadata('1:30 pm', 'time', 946762200000);
+}
+
+/** Verify that a military is correctly detected. */
+function testTimeParserThree() {
+  assertParserMetadata('15:45', 'time', 946770300000);
+}
+
+/** Verify that a black parser is correctly detected. */
+function testBlackFontCurrencyParser() {
+  assertParserMetadata(
+      '<font color=\"black\">$5,000<\/font>', 'blackFontCurrency', 5000);
+}
+
+/** Verify that a text parser is correctly detected. */
+function testTextParser() {
+  assertParserMetadata(' foobar ', 'text', 'foobar');
+}
+
+/**
+ * Asserts the detected parser id and converted format.
+ *
+ * @param {string} parameter Parser type.
+ * @param {string} id Parser id.
+ * @param {string} expectedValue Parser expected value.
+ */
+function assertParserMetadata(parameter, id, expectedValue) {
+  var parser = detectParser(parameter);
+  assertEquals(parser.id, id);
+  assertEquals(parser.format(parameter), expectedValue);
+}
+
+/**
+ * Detects the parsers for a parameter.
+ * @param {string} parameter Parameter for which the parser is to be detected.
+ * @return {treasury.ui.DataParser} Data parser instance for matching parameter.
+ */
+function detectParser(parameter) {
+  var len = dataParsers.length;
+  var dataParser = null;
+  for (var i = 0; i < len; i++) {
+    if (dataParsers[i].is(parameter)) {
+      dataParser = dataParsers[i];
+      break;
+    }
+  }
+  return dataParser;
+}
+</script>
+</body>
+</html>
