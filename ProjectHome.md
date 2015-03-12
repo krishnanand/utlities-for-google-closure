@@ -1,0 +1,1 @@
+This encapsulates a few closure specific utilities for google closure libraries.
